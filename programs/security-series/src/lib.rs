@@ -8,37 +8,80 @@ pub mod security_series {
 
     use super::*;
 
-    pub fn distribute(ctx: Context<DistributeAccounts>, bump: u8) -> Result<()> {
-        
-        system_program::create_account(
-            CpiContext::new_with_signer(ctx.accounts.system_program.to_account_info(), 
-                system_program::CreateAccount{
-                    from: ctx.accounts.user.to_account_info(),
-                    to: ctx.accounts.claimed.to_account_info()
-                }, 
-                &[&[b"claimed", ctx.accounts.user.key().as_ref(), &[bump]]]), 
-            1176249, 41, ctx.program_id)?;
+    pub fn admin_signup(ctx: Context<AdminSignupAccounts>) -> Result<()> {
+        // not implemented yet
 
-        msg!("here - claim this cool stuff!");
+        err!(MyError::NotImplementedYet)
+    }
 
+    pub fn user_signup(ctx: Context<UserSignupAccounts>, _name: String) -> Result<()> {
+        Ok(())
+    }
+    
+    pub fn do_admin_stuff(ctx: Context<AdminAccounts>) -> Result<()> {
+        msg!("you have all the power!");
+        Ok(())
+    }
+
+    pub fn do_user_stuff(ctx: Context<UserAccounts>, _name: String) -> Result<()> {
+        msg!("HAHA! you are just a user!");
         Ok(())
     }
 }
 
 #[derive(Accounts)]
-#[instruction(bump: u8)]
-pub struct DistributeAccounts<'info> {
-    pub user: Signer<'info>,
-    /// CHECK: I totally know what I'm doing here!
+pub struct AdminSignupAccounts<'info> {
+    #[account(mut)]
+    pub admin: Signer<'info>,
     #[account(
-      mut, seeds=[b"claimed", user.key().as_ref()], bump = bump
+      init, payer = admin, space = 8+32+1,
+      seeds=[b"useradmin", admin.key().as_ref()], bump
     )]
-    pub claimed: UncheckedAccount<'info>,
+    pub admin_account: Account<'info, UserAccout>,
     pub system_program: Program<'info, System>,
 }
 
+#[derive(Accounts)]
+#[instruction(name: String)]
+pub struct UserSignupAccounts<'info> {
+    #[account(mut)]
+    pub user: Signer<'info>,
+    #[account(
+      init, payer = user, space = 8+32+1,
+      seeds=[b"user", name.as_bytes(), user.key().as_ref()], bump
+    )]
+    pub user_account: Account<'info, UserAccout>,
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+pub struct AdminAccounts<'info> {
+    pub admin: Signer<'info>,
+    #[account(
+      mut,
+      seeds=[b"useradmin", admin.key().as_ref()], bump
+    )]
+    pub admin_account: Account<'info, UserAccout>,
+}
+
+#[derive(Accounts)]
+#[instruction(name: String)]
+pub struct UserAccounts<'info> {
+    pub user: Signer<'info>,
+    #[account(
+        mut, seeds=[b"user", name.as_bytes(), user.key().as_ref()], bump
+    )]
+    pub user_account: Account<'info, UserAccout>
+}
+
 #[account]
-pub struct ClaimedAccount {
-    pub claimee: Pubkey,
+pub struct UserAccout {
+    pub user: Pubkey,
     pub bump: u8
+}
+
+#[error_code]
+pub enum MyError {
+    #[msg("MyAccount may only hold data below 100")]
+    NotImplementedYet,
 }
