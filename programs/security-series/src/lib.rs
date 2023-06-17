@@ -37,7 +37,7 @@ pub struct AdminSignupAccounts<'info> {
       init, payer = admin, space = 8+32+1,
       seeds=[b"useradmin", admin.key().as_ref()], bump
     )]
-    pub admin_account: Account<'info, UserAccout>,
+    pub admin_account: Account<'info, AdminAccout>,
     pub system_program: Program<'info, System>,
 }
 
@@ -61,7 +61,7 @@ pub struct AdminAccounts<'info> {
       mut,
       seeds=[b"useradmin", admin.key().as_ref()], bump
     )]
-    pub admin_account: Account<'info, UserAccout>,
+    pub admin_account: Account<'info, AdminAccout>,
 }
 
 #[derive(Accounts)]
@@ -76,6 +76,11 @@ pub struct UserAccounts<'info> {
 
 #[account]
 pub struct UserAccout {
+    pub user: Pubkey,
+    pub bump: u8
+}
+#[account]
+pub struct AdminAccout {
     pub user: Pubkey,
     pub bump: u8
 }
