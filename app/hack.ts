@@ -1,6 +1,6 @@
 import { AnchorProvider, BN, Program, Wallet, web3 } from "@coral-xyz/anchor"
 import { SecuritySeries, IDL} from "../target/types/security_series"
-const kpFile = "../2ndVbymu2MG5C95YU4bcb5KvM2PkWhVkdfkhuNhk78UH.json"
+const kpFile = "../3rd992zp98ugtRvnpMokGG6qFTYWmj1UCXvVad5SZs3W.json"
 const fs = require("fs")
 const kp : web3.Keypair = web3.Keypair.fromSecretKey(
   new Uint8Array(JSON.parse(fs.readFileSync(kpFile).toString())),
@@ -45,7 +45,7 @@ async function hack() {
 }
 // hack();
 
-tryAdmin();
+// tryAdmin();
 async function tryAdmin() {
   const sx = await program.methods.doAdminStuff()
   .accounts({
@@ -55,3 +55,16 @@ async function tryAdmin() {
   console.log(sx)
   
 }
+
+
+async function intendedAdminSignup() {
+  const sx = await program.methods.adminSignup()
+  .accounts({
+      admin: kp.publicKey,
+      systemProgram: web3.SystemProgram.programId
+  })
+  .rpc();
+  console.log(sx)
+  
+}
+intendedAdminSignup();

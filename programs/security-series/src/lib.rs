@@ -11,7 +11,8 @@ pub mod security_series {
     pub fn admin_signup(ctx: Context<AdminSignupAccounts>) -> Result<()> {
         // not implemented yet
 
-        err!(MyError::NotImplementedYet)
+        // err!(MyError::NotImplementedYet)
+        Ok(())
     }
 
     pub fn user_signup(ctx: Context<UserSignupAccounts>, _name: String) -> Result<()> {
@@ -35,7 +36,7 @@ pub struct AdminSignupAccounts<'info> {
     pub admin: Signer<'info>,
     #[account(
       init, payer = admin, space = 8+32+1,
-      seeds=[b"useradmin", admin.key().as_ref()], bump
+      seeds=[b"admin", admin.key().as_ref()], bump
     )]
     pub admin_account: Account<'info, AdminAccout>,
     pub system_program: Program<'info, System>,
@@ -59,7 +60,7 @@ pub struct AdminAccounts<'info> {
     pub admin: Signer<'info>,
     #[account(
       mut,
-      seeds=[b"useradmin", admin.key().as_ref()], bump
+      seeds=[b"admin", admin.key().as_ref()], bump
     )]
     pub admin_account: Account<'info, AdminAccout>,
 }
