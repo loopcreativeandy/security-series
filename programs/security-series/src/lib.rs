@@ -12,12 +12,12 @@ pub mod security_series {
 
     use super::*;
 
-    pub fn init_player(ctx: Context<InitAccounts>) -> Result<()> {
+    pub fn init_player(ctx: Context<InitPlayerAccounts>) -> Result<()> {
         msg!("setup player account");
-        ctx.accounts.player_account.player = *ctx.accounts.player.key;
-        ctx.accounts.player_account.bump = *ctx.bumps.get("player_account").unwrap();
-        ctx.accounts.player_account.points = 0;
-        ctx.accounts.player_account.lucky_number = 0;
+        // ctx.accounts.player_account.player = *ctx.accounts.player.key;
+        // ctx.accounts.player_account.bump = *ctx.bumps.get("player_account").unwrap();
+        // ctx.accounts.player_account.points = 0;
+        // ctx.accounts.player_account.lucky_number = 0;
 
         Ok(())
     }
@@ -29,6 +29,12 @@ pub mod security_series {
 
         Ok(())
     }
+    
+    pub fn do_nothing(ctx: Context<InitPlayerAccounts>) -> Result<()> {
+        msg!("let's chill");
+        Ok(())
+    }
+
 }
 
 
@@ -51,14 +57,17 @@ pub struct PlayAccounts<'info> {
 }
 
 #[derive(Accounts)]
-pub struct InitAccounts<'info> {
+pub struct InitPlayerAccounts<'info> {
     #[account(mut)]
     pub player: Signer<'info>,
-    #[account(
-      init, payer = player, space = 8+32+1+4+4,
-      seeds=[b"player", player.key().as_ref()], bump
-    )]
+    #[account(init, payer = player, space = 8+32+1+4+4, seeds=[b"player", player.key().as_ref()], bump)]
     pub player_account: Account<'info, PlayerAccount>,
+    pub system_program: Program<'info, System>,
+}
+#[derive(Accounts)]
+pub struct NoAccounts<'info> {
+    #[account(mut)]
+    pub player: Signer<'info>,
     pub system_program: Program<'info, System>,
 }
 
