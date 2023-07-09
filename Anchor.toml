@@ -3,6 +3,8 @@ seeds = true
 skip-lint = false
 [programs.localnet]
 security_series = "SECmF7dX572jE1S6KGchN6uxi9TMXwPZWUwArfQdgYn"
+[programs.devnet]
+security_series = "SECmF7dX572jE1S6KGchN6uxi9TMXwPZWUwArfQdgYn"
 
 [registry]
 url = "https://api.apr.dev"
