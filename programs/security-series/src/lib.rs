@@ -14,26 +14,44 @@ pub mod security_series {
 
     pub fn init_player(ctx: Context<InitPlayerAccounts>) -> Result<()> {
         msg!("setup player account");
-        // ctx.accounts.player_account.player = *ctx.accounts.player.key;
-        // ctx.accounts.player_account.bump = *ctx.bumps.get("player_account").unwrap();
-        // ctx.accounts.player_account.points = 0;
-        // ctx.accounts.player_account.lucky_number = 0;
+        ctx.accounts.player_account.player = *ctx.accounts.player.key;
+        ctx.accounts.player_account.bump = *ctx.bumps.get("player_account").unwrap();
+        ctx.accounts.player_account.points = 0;
+        ctx.accounts.player_account.lucky_number = 0;
 
         Ok(())
     }
 
-    pub fn play(ctx: Context<PlayAccounts>) -> Result<()> {
+    pub fn play(ctx: Context<PlayAccounts>, round: u32) -> Result<()> {
         msg!("let's play");
+        msg!("player1 points: {}", ctx.accounts.player1_account.points);
+        msg!("player2 points: {}", ctx.accounts.player2_account.points);
 
-        let randos = get_pseudo_random_nrs(&ctx.accounts.sysvar_slothahses_account);
+        let (r1, r2) = get_pseudo_random_nrs(&ctx.accounts.sysvar_slothahses_account)?;
+        // msg!("random numbers: {} {}", r1, r2);
 
+        ctx.accounts.player1_account.lucky_number = r1;
+        ctx.accounts.player2_account.lucky_number = r2;
+
+        let (winner, looser) = if ctx.accounts.player1_account.lucky_number > ctx.accounts.player2_account.lucky_number {
+            msg!("player 1 won!");
+            (&mut ctx.accounts.player1_account, &mut ctx.accounts.player2_account)
+        } else {
+            msg!("player 2 won!");
+            (&mut ctx.accounts.player2_account, &mut ctx.accounts.player1_account)
+        };
+
+        let winner_points = looser.points/4 + 100;
+        looser.points = 0;
+        winner.points += winner_points;
+
+        msg!("winner points: {}", winner.points);
+        msg!("player1 points: {}", ctx.accounts.player1_account.points);
+        msg!("player2 points: {}", ctx.accounts.player2_account.points);
+        
         Ok(())
     }
-    
-    pub fn do_nothing(ctx: Context<InitPlayerAccounts>) -> Result<()> {
-        msg!("let's chill");
-        Ok(())
-    }
+
 
 }
 
@@ -45,10 +63,12 @@ pub struct PlayAccounts<'info> {
     #[account(mut)]
     pub player2: Signer<'info>,
     #[account(
+      mut, 
       seeds=[b"player", player1.key().as_ref()], bump = player1_account.bump
     )]
     pub player1_account: Account<'info, PlayerAccount>,
     #[account(
+        mut, 
         seeds=[b"player", player2.key().as_ref()], bump = player2_account.bump
       )]
     pub player2_account: Account<'info, PlayerAccount>,
