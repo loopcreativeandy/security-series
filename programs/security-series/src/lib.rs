@@ -33,6 +33,12 @@ pub mod security_series {
         ctx.accounts.player1_account.lucky_number = r1;
         ctx.accounts.player2_account.lucky_number = r2;
 
+        
+        Ok(())
+    }
+
+    pub fn evaluate(ctx: Context<PlayAccounts>) -> Result<()> {
+        
         let (winner, looser) = if ctx.accounts.player1_account.lucky_number > ctx.accounts.player2_account.lucky_number {
             msg!("player 1 won!");
             (&mut ctx.accounts.player1_account, &mut ctx.accounts.player2_account)
@@ -48,7 +54,7 @@ pub mod security_series {
         msg!("winner points: {}", winner.points);
         msg!("player1 points: {}", ctx.accounts.player1_account.points);
         msg!("player2 points: {}", ctx.accounts.player2_account.points);
-        
+
         Ok(())
     }
 
