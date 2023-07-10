@@ -47,9 +47,8 @@ pub mod security_series {
             (&mut ctx.accounts.player2_account, &mut ctx.accounts.player1_account)
         };
 
-        let winner_points = winner.points + looser.points/4 + 100;
+        winner.points += looser.points/4 + 100;
         looser.points = 0;
-        winner.points = winner_points;
 
         msg!("winner points: {}", winner.points);
         msg!("player1 points: {}", ctx.accounts.player1_account.points);

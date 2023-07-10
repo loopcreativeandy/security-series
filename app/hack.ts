@@ -18,20 +18,26 @@ const program = new Program<SecuritySeries>(IDL, programId, provider)
 const playerAccount = new web3.PublicKey("Cc5LpZPFw7ShHRTcsT12hzETLP4vYapmuCodiSjc9jP7");
 
 async function play(round : number) {
-  const [pda1, _bump] = web3.PublicKey.findProgramAddressSync(
-    [Buffer.from("player"), kp1.publicKey.toBytes()], programId);
-    const [pda2, _bump2] = web3.PublicKey.findProgramAddressSync(
-      [Buffer.from("player"), kp2.publicKey.toBytes()], programId);
-
-  const sx = await program.methods.play(round)
+  
+  const ix1 = await program.methods.play(round)
   .accounts({
       player1: kp1.publicKey,
       player2: kp1.publicKey,
       sysvarSlothahsesAccount: web3.SYSVAR_SLOT_HASHES_PUBKEY
   })
-  // .signers([kp2])
-  .rpc();
+  .signers([kp2])
+  .instruction();
+  const ix2 = await program.methods.evaluate()
+  .accounts({
+      player1: kp1.publicKey,
+      player2: kp1.publicKey,
+      sysvarSlothahsesAccount: web3.SYSVAR_SLOT_HASHES_PUBKEY
+  })
+  .instruction();
 
+  const tx = new web3.Transaction().add(ix1, ix2);
+
+  const sx = await c.sendTransaction(tx, [kp1]);
   console.log(sx)
   
 }
