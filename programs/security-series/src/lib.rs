@@ -22,6 +22,11 @@ pub mod security_series {
     pub fn flip(ctx: Context<CoinFlipAccounts>) -> Result<()> {
         msg!("let's flip a coin!");
 
+        if **ctx.accounts.player.to_account_info().try_borrow_lamports()? < COINFLIP_FEE {
+            return err!(MyError::InsufficentFunds);
+        };
+        msg!("you have enough funds {}!", **ctx.accounts.player.to_account_info().try_borrow_lamports()?);
+
         let win = get_pseudo_random_bit(&ctx.accounts.sysvar_slothahses_account)?;
         if win {
             msg!("congratulations! you have won!");
