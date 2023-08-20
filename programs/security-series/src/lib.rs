@@ -20,6 +20,20 @@ pub mod security_series {
     }
 
     pub fn flip(ctx: Context<CoinFlipAccounts>) -> Result<()> {
+
+        let restult = sysvar::instructions::load_instruction_at_checked(1, &ctx.accounts.sysvar_instructions_account.to_account_info());
+        match restult {
+            Ok(instr) => {
+                msg!("you are planning something evil ha?");
+                msg!("you illegaly calling {}",instr.program_id.key());
+                return err!(MyError::IllegalInstructionFound);
+            },
+            Err(_) => {
+                let ix = sysvar::instructions::load_current_index_checked( &ctx.accounts.sysvar_instructions_account.to_account_info())?;
+                msg!("all good, I'm instruction {} and there are no other instructions.", ix);
+            }
+        }
+
         msg!("let's flip a coin!");
 
         // if **ctx.accounts.player.to_account_info().try_borrow_lamports()? < COINFLIP_FEE {
@@ -69,7 +83,9 @@ pub struct CoinFlipAccounts<'info> {
     pub treasury_account: Account<'info, TreasuryAccount>,
     pub system_program: Program<'info, System>,
     /// CHECK: we check that manually in the program
-    pub sysvar_slothahses_account: UncheckedAccount<'info>
+    pub sysvar_slothahses_account: UncheckedAccount<'info>,
+    /// CHECK: we check that manually in the program
+    pub sysvar_instructions_account: UncheckedAccount<'info>
 }
 
 #[account]
@@ -79,6 +95,8 @@ pub struct TreasuryAccount {
 
 #[error_code]
 pub enum MyError {
+    #[msg("No other instructions allowed in the same transaction")]
+    IllegalInstructionFound,
     #[msg("Insufficient funds for flip")]
     InsufficentFunds,
 }

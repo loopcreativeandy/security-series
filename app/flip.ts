@@ -1,6 +1,6 @@
 import { AnchorProvider, BN, Program, Wallet, web3 } from "@coral-xyz/anchor"
 import { SecuritySeries, IDL} from "../target/types/security_series"
-import { SYSVAR_SLOT_HASHES_PUBKEY} from "@solana/web3.js"
+import { SYSVAR_SLOT_HASHES_PUBKEY,SYSVAR_INSTRUCTIONS_PUBKEY} from "@solana/web3.js"
 const kpFile1 = "../keys/And2SoZPuWgG1QtunZ5LvCxwVwzBtkaTH1bBU2eLE2tA.json"
 const fs = require("fs")
 const kp1 : web3.Keypair = web3.Keypair.fromSecretKey(
@@ -18,6 +18,7 @@ async function flip() {
   .accounts({
       player: kp1.publicKey,
       sysvarSlothahsesAccount: SYSVAR_SLOT_HASHES_PUBKEY,
+      sysvarInstructionsAccount: SYSVAR_INSTRUCTIONS_PUBKEY
   })
   .instruction();
   
