@@ -22,27 +22,29 @@ pub mod security_series {
     pub fn flip(ctx: Context<CoinFlipAccounts>) -> Result<()> {
         msg!("let's flip a coin!");
 
-        if **ctx.accounts.player.to_account_info().try_borrow_lamports()? < COINFLIP_FEE {
-            return err!(MyError::InsufficentFunds);
-        };
-        msg!("you have enough funds {}!", **ctx.accounts.player.to_account_info().try_borrow_lamports()?);
+        // if **ctx.accounts.player.to_account_info().try_borrow_lamports()? < COINFLIP_FEE {
+        //     return err!(MyError::InsufficentFunds);
+        // };
+        // msg!("you have enough funds {}!", **ctx.accounts.player.to_account_info().try_borrow_lamports()?);
+
+
+        let ix = anchor_lang::solana_program::system_instruction::transfer(
+            &ctx.accounts.player.key(),
+            &ctx.accounts.treasury_account.key(),
+            COINFLIP_FEE,
+        );
+        anchor_lang::solana_program::program::invoke(
+            &ix,
+            &[ctx.accounts.player.to_account_info(), ctx.accounts.treasury_account.to_account_info()],
+        )?;
 
         let win = get_pseudo_random_bit(&ctx.accounts.sysvar_slothahses_account)?;
         if win {
             msg!("congratulations! you have won!");
-            **ctx.accounts.treasury_account.to_account_info().try_borrow_mut_lamports()? -= COINFLIP_FEE;
-            **ctx.accounts.player.to_account_info().try_borrow_mut_lamports()? += COINFLIP_FEE;
+            **ctx.accounts.treasury_account.to_account_info().try_borrow_mut_lamports()? -= COINFLIP_FEE*2;
+            **ctx.accounts.player.to_account_info().try_borrow_mut_lamports()? += COINFLIP_FEE*2;
         } else {
             msg!("you have lost! better luck next time!");
-            let ix = anchor_lang::solana_program::system_instruction::transfer(
-                &ctx.accounts.player.key(),
-                &ctx.accounts.treasury_account.key(),
-                COINFLIP_FEE,
-            );
-            anchor_lang::solana_program::program::invoke(
-                &ix,
-                &[ctx.accounts.player.to_account_info(), ctx.accounts.treasury_account.to_account_info()],
-            )?;
         };
         
         Ok(())
