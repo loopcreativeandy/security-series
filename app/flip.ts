@@ -1,7 +1,7 @@
 import { AnchorProvider, BN, Program, Wallet, web3 } from "@coral-xyz/anchor"
 import { SecuritySeries, IDL} from "../target/types/security_series"
 import { SYSVAR_SLOT_HASHES_PUBKEY} from "@solana/web3.js"
-const kpFile1 = "../keys/BrornmWrTi9iTp71h8o1ey92b92ijfJDFQ7XMPJNVZj6.json"
+const kpFile1 = "../keys/And2SoZPuWgG1QtunZ5LvCxwVwzBtkaTH1bBU2eLE2tA.json"
 const fs = require("fs")
 const kp1 : web3.Keypair = web3.Keypair.fromSecretKey(
   new Uint8Array(JSON.parse(fs.readFileSync(kpFile1).toString())),

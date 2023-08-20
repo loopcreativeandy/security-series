@@ -5,114 +5,82 @@ use solana_program::{
 
 declare_id!("CaskxYs2fbFggrf1wsccAQGRKL3FgGM8vWUsJ1khMdHs");
 
+const COINFLIP_FEE : u64 = 10000000;
+
 #[program]
 pub mod security_series {
 
     use super::*;
 
-    pub fn init_player(ctx: Context<InitPlayerAccounts>) -> Result<()> {
-        msg!("setup player account");
-        ctx.accounts.player_account.player = *ctx.accounts.player.key;
-        ctx.accounts.player_account.bump = *ctx.bumps.get("player_account").unwrap();
-        ctx.accounts.player_account.points = 0;
-        ctx.accounts.player_account.lucky_number = 0;
+    pub fn init_treasury(ctx: Context<InitAccounts>) -> Result<()> {
+        msg!("setup treasury account");
+        ctx.accounts.treasury_account.bump = *ctx.bumps.get("treasury_account").unwrap();
 
         Ok(())
     }
 
-    pub fn play(ctx: Context<PlayAccounts>, round: u32) -> Result<()> {
-        msg!("let's play");
-        msg!("player1 points: {}", ctx.accounts.player1_account.points);
-        msg!("player2 points: {}", ctx.accounts.player2_account.points);
+    pub fn flip(ctx: Context<CoinFlipAccounts>) -> Result<()> {
+        msg!("let's flip a coin!");
 
-        let (r1, r2) = get_pseudo_random_nrs(&ctx.accounts.sysvar_slothahses_account)?;
-        // msg!("random numbers: {} {}", r1, r2);
-
-        ctx.accounts.player1_account.lucky_number = r1;
-        ctx.accounts.player2_account.lucky_number = r2;
-
-        
-        Ok(())
-    }
-
-    pub fn evaluate(ctx: Context<PlayAccounts>) -> Result<()> {
-        
-        let (winner, looser) = if ctx.accounts.player1_account.lucky_number > ctx.accounts.player2_account.lucky_number {
-            msg!("player 1 won!");
-            (&mut ctx.accounts.player1_account, &mut ctx.accounts.player2_account)
+        let win = get_pseudo_random_bit(&ctx.accounts.sysvar_slothahses_account)?;
+        if win {
+            msg!("congratulations! you have won!");
+            **ctx.accounts.treasury_account.to_account_info().try_borrow_mut_lamports()? -= COINFLIP_FEE;
+            **ctx.accounts.player.to_account_info().try_borrow_mut_lamports()? += COINFLIP_FEE;
         } else {
-            msg!("player 2 won!");
-            (&mut ctx.accounts.player2_account, &mut ctx.accounts.player1_account)
+            msg!("you have lost! better luck next time!");
+            let ix = anchor_lang::solana_program::system_instruction::transfer(
+                &ctx.accounts.player.key(),
+                &ctx.accounts.treasury_account.key(),
+                COINFLIP_FEE,
+            );
+            anchor_lang::solana_program::program::invoke(
+                &ix,
+                &[ctx.accounts.player.to_account_info(), ctx.accounts.treasury_account.to_account_info()],
+            )?;
         };
-
-        winner.points += looser.points/4 + 100;
-        looser.points = 0;
-
-        msg!("winner points: {}", winner.points);
-        msg!("player1 points: {}", ctx.accounts.player1_account.points);
-        msg!("player2 points: {}", ctx.accounts.player2_account.points);
-
+        
         Ok(())
     }
-
 
 }
 
 
 #[derive(Accounts)]
-pub struct PlayAccounts<'info> {
+pub struct InitAccounts<'info> {
     #[account(mut)]
-    pub player1: Signer<'info>,
+    pub payer: Signer<'info>,
+    #[account(init, payer = payer, space = 8+1, seeds=[b"treasury"], bump)]
+    pub treasury_account: Account<'info, TreasuryAccount>,
+    pub system_program: Program<'info, System>,
+}
+#[derive(Accounts)]
+pub struct CoinFlipAccounts<'info> {
     #[account(mut)]
-    pub player2: Signer<'info>,
-    #[account(
-      mut, 
-      seeds=[b"player", player1.key().as_ref()], bump = player1_account.bump
-    )]
-    pub player1_account: Account<'info, PlayerAccount>,
-    #[account(
-        mut, 
-        seeds=[b"player", player2.key().as_ref()], bump = player2_account.bump
-      )]
-    pub player2_account: Account<'info, PlayerAccount>,
+    pub player: Signer<'info>,
+    #[account(mut, seeds=[b"treasury"], bump = treasury_account.bump)]
+    pub treasury_account: Account<'info, TreasuryAccount>,
+    pub system_program: Program<'info, System>,
     /// CHECK: we check that manually in the program
     pub sysvar_slothahses_account: UncheckedAccount<'info>
 }
 
-#[derive(Accounts)]
-pub struct InitPlayerAccounts<'info> {
-    #[account(mut)]
-    pub player: Signer<'info>,
-    #[account(init, payer = player, space = 8+32+1+4+4, seeds=[b"player", player.key().as_ref()], bump)]
-    pub player_account: Account<'info, PlayerAccount>,
-    pub system_program: Program<'info, System>,
-}
-#[derive(Accounts)]
-pub struct NoAccounts<'info> {
-    #[account(mut)]
-    pub player: Signer<'info>,
-    pub system_program: Program<'info, System>,
-}
-
 #[account]
-pub struct PlayerAccount {
-    pub player: Pubkey,
+pub struct TreasuryAccount {
     pub bump: u8,
-    pub points: u32,
-    pub lucky_number: u32
 }
 
 #[error_code]
 pub enum MyError {
-    #[msg("Some error")]
-    MaybeINeedThatLater,
+    #[msg("Insufficient funds for flip")]
+    InsufficentFunds,
 }
 
 
 
 
 
-fn get_pseudo_random_nrs(sysvar_slothahses_account: &AccountInfo) -> Result<(u32, u32)>{
+fn get_pseudo_random_bit(sysvar_slothahses_account: &AccountInfo) -> Result<bool>{
         
     if *sysvar_slothahses_account.key != sysvar::slot_hashes::id() {
         msg!("Invalid SlotHashes sysvar");
@@ -132,8 +100,8 @@ fn get_pseudo_random_nrs(sysvar_slothahses_account: &AccountInfo) -> Result<(u32
     msg!("Using hash from slot {}: {}", slot_number, Hash::new(slot_hash));
 
     let random_number1 = u32::from_le_bytes(slot_hash[10..14].try_into().unwrap());
-    let random_number2 = u32::from_le_bytes(slot_hash[16..20].try_into().unwrap());
-    msg!("Calculated pseudo-random numbers: {} {}", random_number1, random_number2);
+    let random_bit = random_number1 % 2 == 1;
+    msg!("Calculated pseudo-random number: {} -> {}", random_number1, random_bit);
 
-    Ok((random_number1, random_number2))
+    Ok(random_bit)
 }

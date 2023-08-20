@@ -1,10 +1,13 @@
 import { AnchorProvider, BN, Program, Wallet, web3 } from "@coral-xyz/anchor"
 import { SecuritySeries, IDL} from "../target/types/security_series"
-import { SYSVAR_SLOT_HASHES_PUBKEY} from "@solana/web3.js"
-const kpFile1 = "../keys/BrornmWrTi9iTp71h8o1ey92b92ijfJDFQ7XMPJNVZj6.json"
+const kpFile2 = "../keys/2ndVbymu2MG5C95YU4bcb5KvM2PkWhVkdfkhuNhk78UH.json"
+const kpFile1 = "../keys/And2SoZPuWgG1QtunZ5LvCxwVwzBtkaTH1bBU2eLE2tA.json"
 const fs = require("fs")
 const kp1 : web3.Keypair = web3.Keypair.fromSecretKey(
   new Uint8Array(JSON.parse(fs.readFileSync(kpFile1).toString())),
+);
+const kp2 : web3.Keypair = web3.Keypair.fromSecretKey(
+  new Uint8Array(JSON.parse(fs.readFileSync(kpFile2).toString())),
 );
 const wallet = new Wallet(kp1);
 const c = new web3.Connection("https://api.devnet.solana.com")
@@ -12,19 +15,18 @@ const provider = new AnchorProvider(c, wallet, {});
 const programId = new web3.PublicKey("CaskxYs2fbFggrf1wsccAQGRKL3FgGM8vWUsJ1khMdHs")
 const program = new Program<SecuritySeries>(IDL, programId, provider)
 
-async function flip() {
+async function setup() {
   
-  const ix1 = await program.methods.flip()
+  const ix1 = await program.methods.initTreasury()
   .accounts({
-      player: kp1.publicKey,
-      sysvarSlothahsesAccount: SYSVAR_SLOT_HASHES_PUBKEY,
+      payer: kp1.publicKey
   })
   .instruction();
   
   const tx = new web3.Transaction().add(ix1);
 
-  const sx = await c.sendTransaction(tx, [kp1], {skipPreflight: true});
+  const sx = await c.sendTransaction(tx, [kp1]);
   console.log(sx)
   
 }
-flip();
+setup();
