@@ -1,14 +1,12 @@
 use anchor_lang::prelude::*;
 use solana_program::{
-    borsh::try_from_slice_unchecked,
     sysvar::{rent::Rent, Sysvar, self}, hash::Hash, program_error::ProgramError,
 };
 
-declare_id!("SECmF7dX572jE1S6KGchN6uxi9TMXwPZWUwArfQdgYn");
+declare_id!("CaskxYs2fbFggrf1wsccAQGRKL3FgGM8vWUsJ1khMdHs");
 
 #[program]
 pub mod security_series {
-    use anchor_lang::system_program;
 
     use super::*;
 
